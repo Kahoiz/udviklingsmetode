@@ -1,6 +1,6 @@
 services:
   api:
-    image: api
+    image: under-image
     build:
       context: .
       dockerfile: Dockerfile

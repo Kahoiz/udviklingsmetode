@@ -1,3 +1,5 @@
+using MathLib;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -21,5 +23,11 @@ app.UseHttpsRedirection();
 app.UseAuthorization();
 
 app.MapControllers();
+
+app.MapGet("/Fubunachi/{number:int}", (int number) =>
+{
+    int result = Fibunachi.GetFibunachi(number);
+    return Results.Ok($"Fibunachi number {number} = {result}");
+});
 
 app.Run();
