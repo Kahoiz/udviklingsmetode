@@ -24,9 +24,9 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-app.MapGet("/Fubunachi/{number:int}", (int number) =>
+app.MapGet("/Fibunachi/{number:int}", async (int number) =>
 {
-    int result = Fibunachi.GetFibunachi(number);
+    int result = await Task.Run(() => Fibunachi.GetFibunachi(number));
     return Results.Ok($"Fibunachi number {number} = {result}");
 });
 
