@@ -7,7 +7,7 @@ class Program
     static async Task Main(string[] args)
     {
         //var benchmark = BenchmarkV1.RunBenchmarkAsync(_url,10000,50000);
-        var benchmark = BenchmarkV0.BenchmarkAsync();
-        await benchmark;
+        //var benchmark = BenchmarkV0.BenchmarkAsync();
+        BenchmarkV6.Run();
     }
 }
