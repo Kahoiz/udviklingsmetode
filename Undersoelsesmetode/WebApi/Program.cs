@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using MathLib;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -18,16 +19,33 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+
 //app.UseHttpsRedirection();
 
 app.UseAuthorization();
 
 app.MapControllers();
 
+var logger = app.Services.GetRequiredService<ILogger<Program>>();
+
 app.MapGet("/Fibunachi/{number:int}", async (int number) =>
 {
-    int result = await Task.Run(() => Fibunachi.GetFibunachi(number));
-    return Results.Ok($"Fibunachi number {number} = {result}");
+    try
+    {
+        if (number < 0)
+        {
+            return Results.BadRequest("Number must be non-negative.");
+        }
+
+        int result = await Task.Run(() => Fibunachi.GetFibunachi(number));
+        return Results.Ok($"Fibunachi number {number} = {result}");
+    }
+    catch (Exception ex)
+    {
+        // Log the exception
+        logger.LogError(ex, "An error occurred while processing the request.");
+        return Results.Problem("An error occurred while processing your request.");
+    }
 });
 
 app.Run();
