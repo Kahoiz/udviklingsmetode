@@ -1,0 +1,3 @@
+[submodule "php-api/php-api/laradock"]
+	path = php-api/php-api/laradock
+	url = https://github.com/Laradock/laradock.git
