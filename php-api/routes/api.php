@@ -14,10 +14,5 @@ Route::get('/{number}', function () {
 
     return response()->json([
         'fibonacci' => $fibonacci($number),
-        'cpu_usage' => [
-            '1_min' => $cpuUsage[0],
-            '5_min' => $cpuUsage[1],
-            '15_min' => $cpuUsage[2],
-        ]
     ]);
 });
