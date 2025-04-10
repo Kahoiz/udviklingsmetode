@@ -10,14 +10,8 @@ Route::get('/{number}', function () {
         }
         return $fibonacci($n - 1) + $fibonacci($n - 2);
     };
-    $cpuUsage = sys_getloadavg();
 
     return response()->json([
-        'fibonacci' => $fibonacci($number),
-        'cpu_usage' => [
-            '1_min' => $cpuUsage[0],
-            '5_min' => $cpuUsage[1],
-            '15_min' => $cpuUsage[2],
-        ]
+        'fibonacci' => $fibonacci($number)
     ]);
 });

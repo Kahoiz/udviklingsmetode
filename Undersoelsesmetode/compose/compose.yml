@@ -1,6 +1,6 @@
 services:
   api:
-    image: api
+    image: api-no-optimze
     build:
       context: .
       dockerfile: Dockerfile

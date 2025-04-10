@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Logging;
 using MathLib;
+using Microsoft.AspNetCore.Http.HttpResults;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -28,24 +29,42 @@ app.MapControllers();
 
 var logger = app.Services.GetRequiredService<ILogger<Program>>();
 
-app.MapGet("/Fibunachi/{number:int}", async (int number) =>
+app.MapGet("/fibunacci/{number:int}", async (int number) =>
 {
-    try
+    app.MapGet("/fibunacci/{number:int}", async (int number) =>
     {
-        if (number < 0)
-        {
-            return Results.BadRequest("Number must be non-negative.");
-        }
+        var process = System.Diagnostics.Process.GetCurrentProcess();
 
+        // Capture initial memory and CPU usage
+        long initialMemory = process.WorkingSet64;
+        TimeSpan initialCpuTime = process.TotalProcessorTime;
+
+        // Perform the Fibonacci calculation
         int result = await Task.Run(() => Fibunachi.GetFibunachi(number));
-        return Results.Ok($"Fibunachi number {number} = {result}");
-    }
-    catch (Exception ex)
-    {
-        // Log the exception
-        logger.LogError(ex, "An error occurred while processing the request.");
-        return Results.Problem("An error occurred while processing your request.");
-    }
+
+        // Capture final memory and CPU usage
+        long finalMemory = process.WorkingSet64;
+        TimeSpan finalCpuTime = process.TotalProcessorTime;
+
+        // Calculate the differences
+        long memoryUsed = finalMemory - initialMemory;
+        TimeSpan cpuTimeUsed = finalCpuTime - initialCpuTime;
+
+        // Return the result along with resource usage
+        return Results.Ok(new
+        {
+            Message = $"Fibunacci number {number} = {result}",
+            MemoryUsedInBytes = memoryUsed,
+            CpuTimeUsedInMilliseconds = cpuTimeUsed.TotalMilliseconds
+        });
+    });
 });
+
+app.MapGet("/linear/{number:int}", async (int number) =>
+{
+    List<int> res = await Task.Run(() => LinearTask.CalculateLinearFunction(number));
+    return Results.Ok(res);
+});
+
 
 app.Run();

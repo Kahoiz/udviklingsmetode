@@ -5,48 +5,84 @@ namespace Benchmarker;
 
 internal class BenchmarkV4
 {
-    private static readonly HttpClient _httpClient = new();
+    private static readonly HttpClient _httpClient = new()
+    {
+        Timeout = TimeSpan.FromSeconds(30) // Set a reasonable timeout for requests
+    };
 
-    public static async Task RunBenchmark(string url, int initialRate = 1,
+    public static async Task RunBenchmark(string url, string env, int initialRate = 1,
                                    int increaseRate = 1,
                                    int maxRequests = 100)
-                                   
     {
         int currentRate = initialRate;
         Stopwatch stopwatch = new();
+        List<Task<HttpResponseMessage>> tasks = new(); // Fixed initialization of the list
+        DateTime batchStart = DateTime.UtcNow;
         while (currentRate <= maxRequests)
         {
             Console.WriteLine($"Sending {currentRate} requests...");
-            
-            stopwatch.Restart();
-            // Multi-threaded execution
-            List<Task<HttpResponseMessage>> tasks = new();
 
-            for(int i = 0; i < currentRate; i++)
+            stopwatch.Restart();
+
+            // Multi-threaded execution
+            tasks.Clear();
+
+            for (int i = 0; i < currentRate; i++)
             {
-                tasks.Add(SendRequest());
+                tasks.Add(SendRequest(url));
             }
 
-            Task.WhenAll(tasks).Wait();
+            batchStart = DateTime.Now;
+            await Task.WhenAll(tasks); // Use await instead of blocking with .Wait()
 
             Console.WriteLine($"Time taken for {currentRate} requests: {stopwatch.ElapsedMilliseconds} ms");
 
-            // Check if request time exceeds 1 second
+            stopwatch.Stop();
             if (stopwatch.ElapsedMilliseconds < 1000)
             {
-                //only increase the rate if the time is less than 1 second
-                currentRate += increaseRate; // Increase rate as per y = ax + b
-                Console.WriteLine($"Increased rate to {currentRate} requests.");
-
-                await Task.Delay(1000 - (int)stopwatch.ElapsedMilliseconds); // Wait until the next cycle
+                int delay = 1000 - (int)stopwatch.ElapsedMilliseconds;
+                if (delay > 0)
+                {
+                    await Task.Delay(delay); // Avoid negative delay
+                }
             }
-                        
+
+            currentRate += increaseRate;
+            Console.WriteLine($"Increased rate to {currentRate} requests.");
+
+
+
+
+            // Log results to CSV
+            LogResults(env,batchStart,stopwatch.ElapsedMilliseconds, currentRate);
         }
     }
 
-    private static async Task<HttpResponseMessage> SendRequest()
+    private static void LogResults(string env,DateTime batchStart, long batchTime, int requestPrSecound)
     {
-        var response = await _httpClient.GetAsync("http://localhost:5000/Fibunachi/41");
+        string filePath = $"{env}_benchmark_results_{DateTime.UtcNow:yyyyMMdd}.csv";
+
+        // Ensure the file has a header if it doesn't exist
+        if (!File.Exists(filePath))
+        {
+            File.WriteAllText(filePath, "BatchStart;BatchTime-ms;Batchsize\n");
+        }
+
+        // Append results to the CSV file
+        using (StreamWriter writer = new StreamWriter(filePath, append: true))
+        {
+            writer.WriteLine($"{batchStart:yyyy-MM-dd HH:mm:ss};{batchTime};{requestPrSecound}");
+        }
+
+        Console.WriteLine($"Results logged to {filePath}");
+    }
+
+    private static async Task<HttpResponseMessage> SendRequest(string url)
+    {
+        var response = await _httpClient.GetAsync(url);
+
         return response;
     }
 }
+
+    
