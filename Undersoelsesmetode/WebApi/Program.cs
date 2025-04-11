@@ -1,4 +1,6 @@
+using Microsoft.Extensions.Logging;
 using MathLib;
+using Microsoft.AspNetCore.Http.HttpResults;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,16 +20,51 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+
 //app.UseHttpsRedirection();
 
 app.UseAuthorization();
 
 app.MapControllers();
 
-app.MapGet("/Fibunachi/{number:int}", async (int number) =>
+var logger = app.Services.GetRequiredService<ILogger<Program>>();
+
+app.MapGet("/fibunacci/{number:int}", async (int number) =>
 {
-    int result = await Task.Run(() => Fibunachi.GetFibunachi(number));
-    return Results.Ok($"Fibunachi number {number} = {result}");
+    app.MapGet("/fibunacci/{number:int}", async (int number) =>
+    {
+        var process = System.Diagnostics.Process.GetCurrentProcess();
+
+        // Capture initial memory and CPU usage
+        long initialMemory = process.WorkingSet64;
+        TimeSpan initialCpuTime = process.TotalProcessorTime;
+
+        // Perform the Fibonacci calculation
+        int result = await Task.Run(() => Fibunachi.GetFibunachi(number));
+
+        // Capture final memory and CPU usage
+        long finalMemory = process.WorkingSet64;
+        TimeSpan finalCpuTime = process.TotalProcessorTime;
+
+        // Calculate the differences
+        long memoryUsed = finalMemory - initialMemory;
+        TimeSpan cpuTimeUsed = finalCpuTime - initialCpuTime;
+
+        // Return the result along with resource usage
+        return Results.Ok(new
+        {
+            Message = $"Fibunacci number {number} = {result}",
+            MemoryUsedInBytes = memoryUsed,
+            CpuTimeUsedInMilliseconds = cpuTimeUsed.TotalMilliseconds
+        });
+    });
 });
+
+app.MapGet("/linear/{number:int}", async (int number) =>
+{
+    List<int> res = await Task.Run(() => LinearTask.CalculateLinearFunction(number));
+    return Results.Ok(res);
+});
+
 
 app.Run();

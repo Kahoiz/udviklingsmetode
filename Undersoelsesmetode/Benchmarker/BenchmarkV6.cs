@@ -11,16 +11,13 @@ public class BenchmarkV6
     private static readonly string _csvFilePath = "benchmark_results.csv";
     private static readonly object _fileLock = new();
 
-
-
-
     public static void Run()
     {
         using (var writer = new StreamWriter(_csvFilePath, false))
         {
             writer.WriteLine("ThreadId;RequestsCount;ElapsedMilliseconds");
         }
-        
+
         Task.Run(() => SendRequestsContinuously()).Wait();
     }
 
@@ -56,7 +53,7 @@ public class BenchmarkV6
 
         Console.WriteLine($"Thread {threadId} completed {tasks.Count} requests in {watch.ElapsedMilliseconds} ms");
 
-        
+
         lock (_fileLock)
         {
             using (var writer = new StreamWriter(_csvFilePath, true))
